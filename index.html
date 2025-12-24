@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flood Severity Prediction System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <style>
+        :root {
+            --primary: #1a73e8;
+            --primary-dark: #0d47a1;
+            --secondary: #34a853;
+            --warning: #fbbc05;
+            --danger: #ea4335;
+            --dark: #0f1419;
+            --light: #f8f9fa;
+            --gray: #5f6368;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --water-blue: #4fc3f7;
+            --water-dark: #0288d1;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: var(--light);
+            line-height: 1.6;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+        
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Header Styles */
+        header {
+            background: rgba(15, 20, 25, 0.8);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            animation: slideDown 0.8s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from { transform: translateY(-100%); }
+            to { transform: translateY(0); }
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: var(--water-blue);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(79, 195, 247, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(79, 195, 247, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(79, 195, 247, 0); }
+        }
+        
+        .logo i {
+            font-size: 1.8rem;
+            color: white;
+        }
+        
+        .logo h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--water-blue), #a7ffeb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 25px;
+        }
+        
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 15px;
+            border-radius: 20px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        nav a::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--water-blue);
+            transition: width 0.3s;
+        }
+        
+        nav a:hover::before, nav a.active::before {
+            width: 100%;
+        }
+        
+        nav a:hover, nav a.active {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Main Content */
+        .dashboard {
+            padding: 2rem 0;
+        }
+        
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            animation: fadeIn 1s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .dashboard-title h2 {
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, #a7ffeb, var(--water-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .dashboard-title p {
+            color: #b0bec5;
+            font-size: 1.1rem;
+        }
+        
+        .date-selector {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .date-selector input {
+            padding: 10px 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            backdrop-filter: blur(5px);
+        }
+        
+        /* Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 2rem;
+        }
+        
+        .card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            animation: cardAppear 0.6s ease-out;
+            animation-fill-mode: both;
+        }
+        
+        .card:nth-child(1) { animation-delay: 0.1s; }
+        .card:nth-child(2) { animation-delay: 0.2s; }
+        .card:nth-child(3) { animation-delay: 0.3s; }
+        .card:nth-child(4) { animation-delay: 0.4s; }
+        
+        @keyframes cardAppear {
+            from { 
+                opacity: 0; 
+                transform: translateY(30px) scale(0.9); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0) scale(1); 
+            }
+        }
+        
+        .card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .card-title {
+            font-size: 1rem;
+            color: var(--dark);
+            font-weight: 600;
+        }
+        
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-icon.primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        }
+        
+        .card-icon.warning {
+            background: linear-gradient(135deg, var(--warning), #ff8f00);
+        }
+        
+        .card-icon.danger {
+            background: linear-gradient(135deg, var(--danger), #c62828);
+        }
+        
+        .card-icon.secondary {
+            background: linear-gradient(135deg, var(--secondary), #1b5e20);
+        }
+        
+        .card-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+        
+        .card-footer {
+            font-size: 0.9rem;
+            color: var(--gray);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        /* Charts Section */
+        .charts-section {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 25px;
+            margin-bottom: 2rem;
+        }
+        
+        .chart-container {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            animation: fadeInUp 0.8s ease-out;
+        }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .chart-title {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .chart-title i {
+            color: var(--primary);
+        }
+        
+        /* Alert Section */
+        .alert-section {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 2rem;
+            animation: fadeInUp 1s ease-out;
+        }
+        
+        .alert-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .alert-title {
+            font-size: 1.3rem;
+            color: var(--dark);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .alert-title i {
+            color: var(--danger);
+        }
+        
+        .alert-actions {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, var(--warning), #ff8f00);
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .alert-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .alert-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.7);
+            transition: all 0.3s;
+            animation: slideInRight 0.5s ease-out;
+            animation-fill-mode: both;
+        }
+        
+        .alert-item:nth-child(1) { animation-delay: 0.1s; }
+        .alert-item:nth-child(2) { animation-delay: 0.2s; }
+        .alert-item:nth-child(3) { animation-delay: 0.3s; }
+        
+        @keyframes slideInRight {
+            from { 
+                opacity: 0; 
+                transform: translateX(30px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateX(0); 
+            }
+        }
+        
+        .alert-item:hover {
+            transform: translateX(5px);
+            background: rgba(255, 255, 255, 0.9);
+        }
+        
+        .alert-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+        
+        .alert-content {
+            flex: 1;
+        }
+        
+        .alert-message {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--dark);
+        }
+        
+        .alert-time {
+            font-size: 0.85rem;
+            color: var(--gray);
+        }
+        
+        /* XAI Section */
+        .xai-section {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 2rem;
+            animation: fadeInUp 1.2s ease-out;
+        }
+        
+        .xai-title {
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .xai-title i {
+            color: var(--secondary);
+        }
+        
+        .xai-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .xai-item {
+            padding: 20px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.7);
+            transition: all 0.3s;
+            animation: zoomIn 0.6s ease-out;
+            animation-fill-mode: both;
+        }
+        
+        .xai-item:nth-child(1) { animation-delay: 0.1s; }
+        .xai-item:nth-child(2) { animation-delay: 0.2s; }
+        .xai-item:nth-child(3) { animation-delay: 0.3s; }
+        .xai-item:nth-child(4) { animation-delay: 0.4s; }
+        
+        @keyframes zoomIn {
+            from { 
+                opacity: 0; 
+                transform: scale(0.9); 
+            }
+            to { 
+                opacity: 1; 
+                transform: scale(1); 
+            }
+        }
+        
+        .xai-item:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.9);
+        }
+        
+        .xai-item-title {
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--dark);
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .xai-progress {
+            height: 12px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+        
+        .xai-progress-bar {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 1.5s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .xai-progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background-image: linear-gradient(
+                -45deg,
+                rgba(255, 255, 255, 0.2) 25%,
+                transparent 25%,
+                transparent 50%,
+                rgba(255, 255, 255, 0.2) 50%,
+                rgba(255, 255, 255, 0.2) 75%,
+                transparent 75%,
+                transparent
+            );
+            background-size: 20px 20px;
+            animation: move 1s linear infinite;
+        }
+        
+        @keyframes move {
+            0% { background-position: 0 0; }
+            100% { background-position: 20px 0; }
+        }
+        
+        .xai-progress-bar.rainfall {
+            background: linear-gradient(90deg, var(--primary), var(--water-blue));
+            width: 0;
+        }
+        
+        .xai-progress-bar.reservoir {
+            background: linear-gradient(90deg, var(--secondary), #81c784);
+            width: 0;
+        }
+        
+        .xai-progress-bar.terrain {
+            background: linear-gradient(90deg, var(--warning), #ffd54f);
+            width: 0;
+        }
+        
+        .xai-progress-bar.soil {
+            background: linear-gradient(90deg, var(--danger), #ef5350);
+            width: 0;
+        }
+        
+        .xai-value {
+            font-size: 0.9rem;
+            color: var(--gray);
+            text-align: right;
+        }
+        
+        /* Footer */
+        footer {
+            background: rgba(15, 20, 25, 0.8);
+            color: white;
+            padding: 2rem 0;
+            margin-top: 2rem;
+            backdrop-filter: blur(10px);
+        }
+        
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .footer-links {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .footer-links a {
+            color: #b0bec5;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .footer-links a:hover {
+            color: var(--water-blue);
+        }
+        
+        /* Water Animation */
+        .water-wave {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg"><path d="M0 0v46.29c47.79 22.2 103.59 32.17 158 28 70.36-5.37 136.33-33.31 206.8-37.5 73.84-4.36 147.54 16.88 218.2 35.26 69.27 18 138.3 24.88 209.4 13.08 36.15-6 69.85-17.84 104.45-29.34C989.49 25 1113-14.29 1200 52.47V0z" fill="%230288d1" fill-opacity="0.3"/></svg>');
+            background-size: 1200px 100px;
+            animation: wave 12s linear infinite;
+            z-index: -1;
+        }
+        
+        .water-wave:nth-child(2) {
+            animation: wave 10s linear infinite;
+            opacity: 0.5;
+            background-position-x: 200px;
+        }
+        
+        .water-wave:nth-child(3) {
+            animation: wave 15s linear infinite;
+            opacity: 0.3;
+            background-position-x: 100px;
+        }
+        
+        @keyframes wave {
+            0% { background-position-x: 0; }
+            100% { background-position-x: 1200px; }
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            nav ul {
+                gap: 10px;
+            }
+            
+            .dashboard-header {
+                flex-direction: column;
+                gap: 20px;
+                align-items: flex-start;
+            }
+            
+            .xai-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .footer-content {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="particles-js"></div>
+    
+    <div class="water-wave"></div>
+    <div class="water-wave"></div>
+    <div class="water-wave"></div>
+    
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-water"></i>
+                    </div>
+                    <h1>Flood Severity Prediction System</h1>
+                </div>
+                <nav>
+                    <ul>
+                        <li><a href="#" class="active">Dashboard</a></li>
+                        <li><a href="#">Predictions</a></li>
+                        <li><a href="#">Reservoirs</a></li>
+                        <li><a href="#">Alerts</a></li>
+                        <li><a href="#">Settings</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+    
+    <main class="container">
+        <section class="dashboard">
+            <div class="dashboard-header">
+                <div class="dashboard-title">
+                    <h2>Flood Monitoring Dashboard</h2>
+                    <p>Real-time flood severity predictions and alerts powered by ML</p>
+                </div>
+                <div class="date-selector">
+                    <input type="date" id="date-picker">
+                    <button class="btn btn-primary" id="refresh-btn">
+                        <i class="fas fa-sync-alt"></i> Refresh Data
+                    </button>
+                </div>
+            </div>
+            
+            <div class="cards-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Current Flood Risk</div>
+                        <div class="card-icon primary">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                    </div>
+                    <div class="card-value" id="flood-risk">Medium</div>
+                    <div class="card-footer">
+                        <i class="fas fa-clock"></i> Updated 5 mins ago
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">River Level</div>
+                        <div class="card-icon warning">
+                            <i class="fas fa-river"></i>
+                        </div>
+                    </div>
+                    <div class="card-value" id="river-level">2.8 m</div>
+                    <div class="card-footer">
+                        <i class="fas fa-arrow-up"></i> +0.3m from yesterday
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Rainfall (24h)</div>
+                        <div class="card-icon danger">
+                            <i class="fas fa-cloud-rain"></i>
+                        </div>
+                    </div>
+                    <div class="card-value" id="rainfall">45 mm</div>
+                    <div class="card-footer">
+                        <i class="fas fa-bolt"></i> Heavy rainfall expected
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Reservoir Capacity</div>
+                        <div class="card-icon secondary">
+                            <i class="fas fa-tint"></i>
+                        </div>
+                    </div>
+                    <div class="card-value" id="reservoir-capacity">78%</div>
+                    <div class="card-footer">
+                        <i class="fas fa-check-circle"></i> Normal operating range
+                    </div>
+                </div>
+            </div>
+            
+            <div class="charts-section">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-chart-line"></i> Flood Severity Prediction
+                    </div>
+                    <canvas id="severityChart"></canvas>
+                </div>
+                
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-chart-bar"></i> Reservoir Levels
+                    </div>
+                    <canvas id="reservoirChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="alert-section">
+                <div class="alert-header">
+                    <div class="alert-title">
+                        <i class="fas fa-bell"></i> Active Alerts
+                    </div>
+                    <div class="alert-actions">
+                        <button class="btn btn-primary" id="send-sms-btn">
+                            <i class="fas fa-sms"></i> Send SMS Alert
+                        </button>
+                        <button class="btn btn-warning" id="send-email-btn">
+                            <i class="fas fa-envelope"></i> Send Email Alert
+                        </button>
+                    </div>
+                </div>
+                <div class="alert-list">
+                    <div class="alert-item">
+                        <div class="alert-icon danger">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                        <div class="alert-content">
+                            <div class="alert-message">High flood risk predicted for River A in next 24 hours</div>
+                            <div class="alert-time">Issued: Today, 10:30 AM</div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert-item">
+                        <div class="alert-icon warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="alert-content">
+                            <div class="alert-message">Moderate flood risk for Region B due to heavy rainfall</div>
+                            <div class="alert-time">Issued: Today, 8:15 AM</div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert-item">
+                        <div class="alert-icon primary">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        <div class="alert-content">
+                            <div class="alert-message">Reservoir C approaching 85% capacity</div>
+                            <div class="alert-time">Issued: Yesterday, 4:45 PM</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="xai-section">
+                <div class="xai-title">
+                    <i class="fas fa-brain"></i> Explainable AI: Flood Prediction Factors
+                </div>
+                <div class="xai-content">
+                    <div class="xai-item">
+                        <div class="xai-item-title">
+                            <span>Rainfall Intensity</span>
+                            <span id="rainfall-value">0%</span>
+                        </div>
+                        <div class="xai-progress">
+                            <div class="xai-progress-bar rainfall" id="rainfall-bar"></div>
+                        </div>
+                        <div class="xai-value">Impact on prediction</div>
+                    </div>
+                    
+                    <div class="xai-item">
+                        <div class="xai-item-title">
+                            <span>Reservoir Levels</span>
+                            <span id="reservoir-value">0%</span>
+                        </div>
+                        <div class="xai-progress">
+                            <div class="xai-progress-bar reservoir" id="reservoir-bar"></div>
+                        </div>
+                        <div class="xai-value">Impact on prediction</div>
+                    </div>
+                    
+                    <div class="xai-item">
+                        <div class="xai-item-title">
+                            <span>Terrain & Drainage</span>
+                            <span id="terrain-value">0%</span>
+                        </div>
+                        <div class="xai-progress">
+                            <div class="xai-progress-bar terrain" id="terrain-bar"></div>
+                        </div>
+                        <div class="xai-value">Impact on prediction</div>
+                    </div>
+                    
+                    <div class="xai-item">
+                        <div class="xai-item-title">
+                            <span>Soil Saturation</span>
+                            <span id="soil-value">0%</span>
+                        </div>
+                        <div class="xai-progress">
+                            <div class="xai-progress-bar soil" id="soil-bar"></div>
+                        </div>
+                        <div class="xai-value">Impact on prediction</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="copyright">
+                    &copy; 2025 Flood Severity Prediction System. All rights reserved.
+                </div>
+                <div class="footer-links">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                    <a href="#">Contact Us</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        // Initialize Particles.js
+        particlesJS("particles-js", {
+            particles: {
+                number: { value: 80, density: { enable: true, value_area: 800 } },
+                color: { value: "#4fc3f7" },
+                shape: { type: "circle" },
+                opacity: { value: 0.5, random: true },
+                size: { value: 3, random: true },
+                line_linked: {
+                    enable: true,
+                    distance: 150,
+                    color: "#4fc3f7",
+                    opacity: 0.2,
+                    width: 1
+                },
+                move: {
+                    enable: true,
+                    speed: 2,
+                    direction: "none",
+                    random: true,
+                    straight: false,
+                    out_mode: "out",
+                    bounce: false
+                }
+            },
+            interactivity: {
+                detect_on: "canvas",
+                events: {
+                    onhover: { enable: true, mode: "repulse" },
+                    onclick: { enable: true, mode: "push" },
+                    resize: true
+                }
+            }
+        });
+        
+        // Set today's date as default
+        document.getElementById('date-picker').valueAsDate = new Date();
+        
+        // Initialize Charts
+        const severityCtx = document.getElementById('severityChart').getContext('2d');
+        const severityChart = new Chart(severityCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+                datasets: [{
+                    label: 'Flood Severity Index',
+                    data: [25, 30, 45, 40, 60, 55, 70, 65, 50, 45],
+                    borderColor: '#1a73e8',
+                    backgroundColor: 'rgba(26, 115, 232, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#1a73e8',
+                    pointRadius: 5,
+                    pointHoverRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: 'Severity Index',
+                            color: '#5f6368'
+                        },
+                        grid: {
+                            color: 'rgba(0,0,0,0.05)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+        
+        const reservoirCtx = document.getElementById('reservoirChart').getContext('2d');
+        const reservoirChart = new Chart(reservoirCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Reservoir A', 'Reservoir B', 'Reservoir C', 'Reservoir D'],
+                datasets: [{
+                    label: 'Capacity (%)',
+                    data: [78, 65, 85, 72],
+                    backgroundColor: [
+                        'rgba(52, 168, 83, 0.7)',
+                        'rgba(251, 188, 5, 0.7)',
+                        'rgba(234, 67, 53, 0.7)',
+                        'rgba(26, 115, 232, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgb(52, 168, 83)',
+                        'rgb(251, 188, 5)',
+                        'rgb(234, 67, 53)',
+                        'rgb(26, 115, 232)'
+                    ],
+                    borderWidth: 1,
+                    borderRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: 'Capacity (%)',
+                            color: '#5f6368'
+                        },
+                        grid: {
+                            color: 'rgba(0,0,0,0.05)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Animate XAI progress bars
+        function animateXAI() {
+            const rainfallBar = document.getElementById('rainfall-bar');
+            const reservoirBar = document.getElementById('reservoir-bar');
+            const terrainBar = document.getElementById('terrain-bar');
+            const soilBar = document.getElementById('soil-bar');
+            
+            const rainfallValue = document.getElementById('rainfall-value');
+            const reservoirValue = document.getElementById('reservoir-value');
+            const terrainValue = document.getElementById('terrain-value');
+            const soilValue = document.getElementById('soil-value');
+            
+            // Set final widths
+            setTimeout(() => {
+                rainfallBar.style.width = '85%';
+                reservoirBar.style.width = '70%';
+                terrainBar.style.width = '45%';
+                soilBar.style.width = '60%';
+                
+                // Update values with counting animation
+                animateValue(rainfallValue, 0, 85, 1500);
+                animateValue(reservoirValue, 0, 70, 1500);
+                animateValue(terrainValue, 0, 45, 1500);
+                animateValue(soilValue, 0, 60, 1500);
+            }, 500);
+        }
+        
+        // Value counting animation
+        function animateValue(element, start, end, duration) {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const value = Math.floor(progress * (end - start) + start);
+                element.textContent = value + '%';
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+        
+        // Alert functionality
+        document.getElementById('send-sms-btn').addEventListener('click', function() {
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+            setTimeout(() => {
+                this.innerHTML = '<i class="fas fa-sms"></i> SMS Sent!';
+                setTimeout(() => {
+                    this.innerHTML = '<i class="fas fa-sms"></i> Send SMS Alert';
+                }, 2000);
+            }, 1500);
+        });
+        
+        document.getElementById('send-email-btn').addEventListener('click', function() {
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+            setTimeout(() => {
+                this.innerHTML = '<i class="fas fa-envelope"></i> Email Sent!';
+                setTimeout(() => {
+                    this.innerHTML = '<i class="fas fa-envelope"></i> Send Email Alert';
+                }, 2000);
+            }, 1500);
+        });
+        
+        // Refresh data functionality
+        document.getElementById('refresh-btn').addEventListener('click', function() {
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+            
+            // Simulate data refresh
+            setTimeout(() => {
+                // Update card values with slight random variations
+                document.getElementById('river-level').textContent = (2.8 + (Math.random() * 0.4 - 0.2)).toFixed(1) + ' m';
+                document.getElementById('rainfall').textContent = Math.floor(45 + Math.random() * 10 - 5) + ' mm';
+                document.getElementById('reservoir-capacity').textContent = Math.floor(78 + Math.random() * 6 - 3) + '%';
+                
+                // Update flood risk with random status
+                const risks = ['Low', 'Medium', 'High'];
+                const risk = risks[Math.floor(Math.random() * risks.length)];
+                document.getElementById('flood-risk').textContent = risk;
+                
+                // Update chart data
+                severityChart.data.datasets[0].data = severityChart.data.datasets[0].data.map(
+                    value => Math.max(10, Math.min(90, value + (Math.random() * 10 - 5)))
+                );
+                severityChart.update();
+                
+                reservoirChart.data.datasets[0].data = reservoirChart.data.datasets[0].data.map(
+                    value => Math.max(40, Math.min(95, value + (Math.random() * 10 - 5)))
+                );
+                reservoirChart.update();
+                
+                this.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh Data';
+                
+                // Show refresh confirmation
+                const toast = document.createElement('div');
+                toast.style.cssText = `
+                    position: fixed;
+                    top: 100px;
+                    right: 20px;
+                    background: var(--secondary);
+                    color: white;
+                    padding: 12px 20px;
+                    border-radius: 8px;
+                    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+                    z-index: 1000;
+                    animation: slideInRight 0.5s, slideOutRight 0.5s 2.5s;
+                `;
+                toast.innerHTML = '<i class="fas fa-check-circle"></i> Data updated successfully';
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 3000);
+            }, 1500);
+        });
+        
+        // Initialize animations
+        window.addEventListener('load', () => {
+            animateXAI();
+            
+            // Add animation to cards on scroll
+            const cards = document.querySelectorAll('.card');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.animationPlayState = 'running';
+                        observer.unobserve(entry.target);
+                    }
+                });
+            });
+            
+            cards.forEach(card => {
+                card.style.animationPlayState = 'paused';
+                observer.observe(card);
+            });
+        });
+    </script>
+</body>
+</html>
